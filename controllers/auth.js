@@ -11,7 +11,7 @@ const authMiddleWare = require('../middleware/auth');
 // @route    POST /api/v1/auth/register
 // @access   public
 exports.register = asyncHandler(async (req, res, next) => {
-    const { name, email, password, role } = req.body;
+    const { user_name, email, password, role, address, mobile_no, full_name } = req.body;
 
     //Create User
     // const user = await User.create({
