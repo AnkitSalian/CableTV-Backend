@@ -31,15 +31,15 @@ exports.register = asyncHandler(async (req, res, next) => {
 // @route    POST /api/v1/auth/login
 // @access   public
 exports.login = asyncHandler(async (req, res, next) => {
-    const { email, password } = req.body;
+    const { user_name, password } = req.body;
 
     //Validate email and password
-    if (!email || !password) {
+    if (!user_name || !password) {
         return next(new ErrorResponse('Please provide an email and password', 400));
     }
 
     //Check for User
-    const user = await authDao.checkUser(email);
+    const user = await authDao.checkUser(user_name);
 
     if (!user) {
         return next(new ErrorResponse('User not found', 401));
@@ -51,6 +51,8 @@ exports.login = asyncHandler(async (req, res, next) => {
     if (!isMatch) {
         return next(new ErrorResponse('Invalid credentials', 401));
     }
+
+    await authDao.updateLastLogin(user.user_id);
 
     sendTokenResponse(user, 200, res);
 })
