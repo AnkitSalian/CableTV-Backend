@@ -13,18 +13,28 @@ const authMiddleWare = require('../middleware/auth');
 exports.register = asyncHandler(async (req, res, next) => {
     const { user_name, email, password, role, address, mobile_no, full_name } = req.body;
 
+    //Check user_name already exits
+    const user_count = await authDao.checkUserNameExists(user_name);
+
+    if (user_count != 0) {
+        return next(new ErrorResponse('User already exist, kindly select different user name', 401));
+    }
+
+    if (!process.env.ROLES.split(',').includes(role)) {
+        return next(new ErrorResponse(`Invalid Role, role can be either one of ${process.env.ROLES}`, 401));
+    }
+
     //Create User
-    // const user = await User.create({
-    //     name,
-    //     email,
-    //     password,
-    //     role
-    // });
+    await authDao.createUser(
+        { user_name, email, password, role, address, mobile_no, full_name }
+    );
 
-    //Create Token
-    // const token = user.getSignedJwtToken();
+    const user = await authDao.getUser(user_name, false);
 
-    // sendTokenResponse(user, 200, res);
+    await authDao.updateLastLogin(user.user_id);
+
+    sendTokenResponse(user, 200, res);
+
 })
 
 // @desc     Login
@@ -39,7 +49,7 @@ exports.login = asyncHandler(async (req, res, next) => {
     }
 
     //Check for User
-    const user = await authDao.checkUser(user_name);
+    const user = await authDao.getUser(user_name, false);
 
     if (!user) {
         return next(new ErrorResponse('User not found', 401));
@@ -76,11 +86,13 @@ exports.logout = asyncHandler(async (req, res, next) => {
 // @route    POST /api/v1/auth/me
 // @access   private
 exports.getMe = asyncHandler(async (req, res, next) => {
-    // const user = await User.findById(req.user.id);
+    const { id } = req.body;
+
+    const user = await authDao.getUser(id, true);
 
     res.status(200).json({
         success: true,
-        // data: user
+        data: user
     })
 })
 
@@ -89,11 +101,9 @@ exports.getMe = asyncHandler(async (req, res, next) => {
 // @route    PUT /api/v1/auth/updatedetails
 // @access   private
 exports.updateDetails = asyncHandler(async (req, res, next) => {
-    const fieldsToUpdate = {
-        name: req.body.name,
-        email: req.body.email
-    };
+    const { id } = req.body;
 
+    console.log('body===>', req.body);
     // const user = await User.findByIdAndUpdate(req.user.id, fieldsToUpdate, {
     //     new: true,
     //     runValidators: true
