@@ -2,10 +2,10 @@ const brcypt = require('bcryptjs');
 const connectDB = require('../config/db')
 const asyncHandler = require('../middleware/async');
 
-exports.checkUser = asyncHandler(async (user_name) => {
+exports.getUser = asyncHandler(async (user_value, idFlag) => {
     return new Promise(async (resolve, reject) => {
         connection = await connectDB();
-        await connection.query(`select * from user where user_name = '${user_name}'`, (error, results) => {
+        await connection.query(`select * from user where ${idFlag ? 'user_id' : 'user_name'}  = '${user_value}'`, (error, results) => {
             if (error) reject(error);
             connection.release;
             resolve(results[0]);
@@ -26,7 +26,20 @@ exports.updateLastLogin = asyncHandler(async (user_id) => {
     })
 })
 
-exports.createUser = asyncHandler(async (user_name, email, password, role, address, mobile_no, full_name) => {
+exports.checkUserNameExists = asyncHandler(async (user_name) => {
+    console.log('Inside checkUserNameExists====>');
+    return new Promise(async (resolve, reject) => {
+        connection = await connectDB();
+        await connection.query(`select count(1) as user_count from user where user_name = '${user_name}'`, (error, results) => {
+            if (error) reject(error);
+            connection.release;
+            resolve(results[0].user_count);
+        })
+    })
+})
+
+exports.createUser = asyncHandler(async ({ user_name, email, password, role, address, mobile_no, full_name }) => {
+    console.log('Value===>', user_name, email, password, role, address, mobile_no, full_name);
     return new Promise(async (resolve, reject) => {
         connection = await connectDB();
         const salt = await brcypt.genSalt(10);
@@ -35,7 +48,7 @@ exports.createUser = asyncHandler(async (user_name, email, password, role, addre
         values ('${user_name}', '${password}', now(), '${mobile_no}', '${role}', '${email}', '${address}', '${full_name}')`, (error, results) => {
             if (error) reject(error);
             connection.release;
-            console.log(result)
+            resolve(true);
         })
     })
 })
