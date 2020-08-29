@@ -19,7 +19,7 @@ exports.createUserTableQuery = asyncHandler(async (userKey, userReq, id) => {
     let updateQuery = "update user set ";
     const salt = await brcypt.genSalt(10);
     let encrypted_password = '';
-
+    console.log('keys=====>', userKey, userReq);
     if (Object.keys(userReq).includes('password')) {
         encrypted_password = await brcypt.hash(userReq.password, salt);
     }
@@ -30,6 +30,8 @@ exports.createUserTableQuery = asyncHandler(async (userKey, userReq, id) => {
         //If value not blank then insert into query
         if (userReq[key] != '') {
             updateQuery += `${key} = '${key == 'password' ? encrypted_password : userReq[key]}', `;
+        } else if (['reset_password_token', 'reset_password_expire'].includes(key)) {
+            updateQuery += `${key} = '', `
         }
 
     }

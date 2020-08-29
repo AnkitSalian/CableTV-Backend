@@ -156,41 +156,56 @@ exports.updatePassword = asyncHandler(async (req, res, next) => {
 // @route    POST /api/v1/auth/forgotpassword
 // @access   public
 exports.forgotPassword = asyncHandler(async (req, res, next) => {
-    // const user = await User.findOne({ email: req.body.email });
 
-    // if (!user) {
-    //     return next(new ErrorResponse('There is no user with that email', 404));
-    // }
+    const { email, mobile_no } = req.body;
 
-    //Get reset token
-    // const resetToken = user.getResetPasswordToken();
+    //Fetch user information using mobile
+    const user = await authDao.getUserFromMobileNo(mobile_no);
 
-    // await user.save({ validateBeforeSave: false });
+    if (!user) {
+        return next(new ErrorResponse('There is no user with that mobile number', 404));
+    }
+
+    // Get reset token
+    const { resetToken, reset_password_token, reset_password_expire } = authMiddleWare.getResetPasswordToken();
+
+    let keyList = await commonFunctions.getUserTableKeys({ reset_password_token, reset_password_expire });
+
+    //Create dynamic query
+    let query = await commonFunctions.createUserTableQuery(keyList, { reset_password_token, reset_password_expire }, user.user_id);
+
+    //Execute the update
+    await authDao.updateUser(query);
 
     //Create reset URL
-    // const resetUrl = `${req.protocol}://${req.get('host')}/api/v1/auth/resetpassword/${resetToken}`;
+    const resetUrl = `${req.protocol}://${req.get('host')}/api/v1/auth/resetpassword/${resetToken}`;
 
-    const message = `You are receiving this email because you (or someone else) has requested the reset of a password. Please make a PUT request to: \n\n ${resetUrl}`;
+    const message = `You are receiving this sms because you (or someone else) has requested the reset of a password. Please make a PUT request to: \n\n ${resetUrl}`;
 
     try {
-        await sendEmail({
-            email: user.email,
-            subject: 'Password Reset Token',
-            message
-        });
+        // await sendEmail({
+        //     email: user.email,
+        //     subject: 'Password Reset Token',
+        //     message
+        // });
 
         res.status(200).json({
             success: true,
-            data: 'Email Sent'
+            data: 'SMS Sent',
+            resetUrl
         })
     } catch (error) {
         console.log(error);
-        // user.resetPasswordToken = undefined;
-        // user.resetPasswordExpire = undefined;
 
-        // await user.save({ validateBeforeSave: false });
+        let keyList = await commonFunctions.getUserTableKeys({ reset_password_token: '', reset_password_expire: '' });
 
-        return next(new ErrorResponse('Email could not be sent', 500));
+        //Create dynamic query
+        let query = await commonFunctions.createUserTableQuery(keyList, { reset_password_token: '', reset_password_expire: '' }, user.user_id);
+
+        //Execute the update
+        await authDao.updateUser(query);
+
+        return next(new ErrorResponse('SMS could not be sent', 500));
     }
 
 })
@@ -199,25 +214,33 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
 // @route    PUT /api/v1/auth/resetpassword/:resettoken
 // @access   public
 exports.resetpassword = asyncHandler(async (req, res, next) => {
+
+    const { resettoken } = req.params;
+    const { password } = req.body;
+
     //Get hashed token
-    const resetPasswordToken = crypto.createHash('sha256').update(req.params.resettoken).digest('hex');
+    const resetPasswordToken = crypto.createHash('sha256').update(resettoken).digest('hex');
 
-    // const user = await User.findOne({
-    //     resetPasswordToken,
-    //     resetPasswordExpire: { $gt: Date.now() }
-    // });
+    const user = await authDao.getUserFromResetPasswordToken(resetPasswordToken);
+    console.log('======>', user.reset_password_expire);
+    if (!user) {
+        return next(new ErrorResponse('Invalid token', 400));
+    }
 
-    // if (!user) {
-    //     return next(new ErrorResponse('Invalid token', 400));
-    // }
+    if (Number(user.reset_password_expire) < Date.now()) {
+        return next(new ErrorResponse('Token expired', 400));
+    }
 
-    //Set new password
-    // user.password = req.body.password;
-    // user.resetPasswordToken = undefined;
-    // user.resetPasswordExpire = undefined;
-    // await user.save();
+    let keyList = await commonFunctions.getUserTableKeys({ reset_password_token: '', reset_password_expire: '', password });
 
-    // sendTokenResponse(user, 200, res);
+    //Create dynamic query
+    let query = await commonFunctions.createUserTableQuery(keyList, { reset_password_token: '', reset_password_expire: '', password }, user.user_id);
+
+    //Execute the update
+    await authDao.updateUser(query);
+
+
+    sendTokenResponse(user, 200, res);
 })
 
 //Get token from model, create cookie and send response

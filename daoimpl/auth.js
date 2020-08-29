@@ -9,8 +9,7 @@ exports.getUser = asyncHandler(async (user_value, idFlag) => {
         await connection.query(`select * from user where ${idFlag ? 'user_id' : 'user_name'}  = '${user_value}'`, (error, results) => {
             if (error) reject(error);
             connection.release;
-            let user = results[0];
-            resolve(user);
+            resolve(results[0]);
         })
     })
 
@@ -75,6 +74,29 @@ exports.updatePassword = asyncHandler(async (password, id) => {
             if (error) reject(error);
             connection.release;
             resolve(true);
+        })
+    })
+})
+
+exports.getUserFromMobileNo = asyncHandler(async (mobile) => {
+    return new Promise(async (resolve, reject) => {
+        connection = await connectDB();
+        await connection.query(`select * from user where mobile_no = '${mobile}'`, (error, results) => {
+            if (error) reject(error);
+            connection.release;
+            resolve(results[0]);
+        })
+    })
+
+})
+
+exports.getUserFromResetPasswordToken = asyncHandler(async (resetPasswordToken) => {
+    return new Promise(async (resolve, reject) => {
+        connection = await connectDB();
+        await connection.query(`select * from user where reset_password_token = '${resetPasswordToken}'`, (error, results) => {
+            if (error) reject(error);
+            connection.release;
+            resolve(results[0]);
         })
     })
 })
