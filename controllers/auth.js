@@ -222,7 +222,7 @@ exports.resetpassword = asyncHandler(async (req, res, next) => {
     const resetPasswordToken = crypto.createHash('sha256').update(resettoken).digest('hex');
 
     const user = await authDao.getUserFromResetPasswordToken(resetPasswordToken);
-    console.log('======>', user.reset_password_expire);
+
     if (!user) {
         return next(new ErrorResponse('Invalid token', 400));
     }
@@ -241,6 +241,32 @@ exports.resetpassword = asyncHandler(async (req, res, next) => {
 
 
     sendTokenResponse(user, 200, res);
+})
+
+// @desc     Delete User
+// @route    DELETE /api/v1/auth/deleteuser
+// @access   private
+exports.deleteUser = asyncHandler(async (req, res, next) => {
+    const { user_id, id } = req.body;
+
+    const user_admin = await authDao.getUser(id, true);
+
+    if (user_admin.role != 'ADMIN') {
+        return next(new ErrorResponse('Cannot perform this action, only ADMIN has a right to delete', 403));
+    }
+
+    const user = await authDao.getUser(user_id, true);
+
+    if (!user) {
+        return next(new ErrorResponse('User not found, to be deleted', 403));
+    }
+
+    await authDao.deleteUser(user.user_id);
+
+    res.status(200).json({
+        success: true
+    })
+
 })
 
 //Get token from model, create cookie and send response

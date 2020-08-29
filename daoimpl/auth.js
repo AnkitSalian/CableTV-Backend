@@ -100,3 +100,14 @@ exports.getUserFromResetPasswordToken = asyncHandler(async (resetPasswordToken) 
         })
     })
 })
+
+exports.deleteUser = asyncHandler(async (user_id) => {
+    return new Promise(async (resolve, reject) => {
+        connection = await connectDB();
+        await connection.query(`delete from user where user_id = ${user_id}`, (error, result) => {
+            if (error) reject(error);
+            connection.release;
+            resolve(true)
+        })
+    })
+})

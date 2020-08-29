@@ -7,7 +7,8 @@ const {
     resetpassword,
     updateDetails,
     updatePassword,
-    logout
+    logout,
+    deleteUser
 } = require('../controllers/auth');
 
 const router = express.Router();
@@ -29,5 +30,7 @@ router.put('/updatepassword', protect, updatePassword);
 router.post('/forgotpassword', forgotPassword);
 
 router.put('/resetpassword/:resettoken', resetpassword);
+
+router.delete('/deleteuser', protect, deleteUser);
 
 module.exports = router;
