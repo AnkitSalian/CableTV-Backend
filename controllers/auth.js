@@ -57,7 +57,7 @@ exports.login = asyncHandler(async (req, res, next) => {
 
     //Check if password matches
     const isMatch = await brcypt.compare(password, user.password);
-    console.log('isMatch====>', isMatch);
+
     if (!isMatch) {
         return next(new ErrorResponse('Invalid credentials', 401));
     }
@@ -139,17 +139,17 @@ exports.updateDetails = asyncHandler(async (req, res, next) => {
 // @route    PUT /api/v1/auth/updatepassword
 // @access   private
 exports.updatePassword = asyncHandler(async (req, res, next) => {
-    // const user = await User.findById(req.user.id).select('+password');
+    const { currentPassword, newPassword, id } = req.body;
 
-    //Check current password
-    // if (!(await user.matchPassword(req.body.currentPassword))) {
-    //     return next(new ErrorResponse('Password is incorrect', 401))
-    // }
+    const user = await authDao.getUser(id, true);
 
-    // user.password = req.body.newPassword;
-    // await user.save();
+    // Check current password
+    const isMatch = await brcypt.compare(currentPassword, user.password);
 
-    // sendTokenResponse(user, 200, res);
+    //Update password
+    await authDao.updatePassword(newPassword, id);
+
+    sendTokenResponse(user, 200, res);
 })
 
 // @desc     Forgot password

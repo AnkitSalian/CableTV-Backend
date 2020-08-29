@@ -10,7 +10,6 @@ exports.getUser = asyncHandler(async (user_value, idFlag) => {
             if (error) reject(error);
             connection.release;
             let user = results[0];
-            if (idFlag) delete user['password'];
             resolve(user);
         })
     })
@@ -64,5 +63,18 @@ exports.updateUser = asyncHandler(async (query) => {
             resolve(true);
         })
 
+    })
+})
+
+exports.updatePassword = asyncHandler(async (password, id) => {
+    return new Promise(async (resolve, reject) => {
+        connection = await connectDB();
+        const salt = await brcypt.genSalt(10);
+        password = await brcypt.hash(password, salt);
+        await connection.query(`update user set password = '${password}' where user_id = ${id}`, (error, result) => {
+            if (error) reject(error);
+            connection.release;
+            resolve(true);
+        })
     })
 })
