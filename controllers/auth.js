@@ -1,11 +1,11 @@
 const crypto = require('crypto');
 const brcypt = require('bcryptjs');
 const ErrorResponse = require('../utils/errorResponse');
-// const User = require('../models/User');
 const sendEmail = require('../utils/sendEmail');
 const asyncHandler = require('../middleware/async');
 const authDao = require('../daoimpl/auth');
 const authMiddleWare = require('../middleware/auth');
+const commonFunctions = require('../utils/commonfunctions');
 
 // @desc     Register user
 // @route    POST /api/v1/auth/register
@@ -103,15 +103,35 @@ exports.getMe = asyncHandler(async (req, res, next) => {
 exports.updateDetails = asyncHandler(async (req, res, next) => {
     const { id } = req.body;
 
-    console.log('body===>', req.body);
-    // const user = await User.findByIdAndUpdate(req.user.id, fieldsToUpdate, {
-    //     new: true,
-    //     runValidators: true
-    // });
+    let keyList = await commonFunctions.getUserTableKeys(req.body);
+
+    if (keyList.length == 0) {
+        return next(new ErrorResponse(`No column values specified, kindly enter the value that has: ${process.env.USER_TABLE_COLUMNS}`, 400));
+    }
+
+    if (keyList.includes('user_name')) {
+
+        //Check user_name already exits
+        const user_count = await authDao.checkUserNameExists(req.body.user_name);
+
+        if (user_count != 0) {
+            return next(new ErrorResponse('User already exist, kindly select different user name', 401));
+        }
+
+    }
+
+    //Create dynamic query
+    let query = await commonFunctions.createUserTableQuery(keyList, req.body, id);
+
+    //Execute the update
+    await authDao.updateUser(query);
+
+    //Fetch saved user information
+    const user = await authDao.getUser(id, true);
 
     res.status(200).json({
         success: true,
-        // data: user
+        data: user
     })
 })
 
@@ -119,58 +139,73 @@ exports.updateDetails = asyncHandler(async (req, res, next) => {
 // @route    PUT /api/v1/auth/updatepassword
 // @access   private
 exports.updatePassword = asyncHandler(async (req, res, next) => {
-    // const user = await User.findById(req.user.id).select('+password');
+    const { currentPassword, newPassword, id } = req.body;
 
-    //Check current password
-    // if (!(await user.matchPassword(req.body.currentPassword))) {
-    //     return next(new ErrorResponse('Password is incorrect', 401))
-    // }
+    const user = await authDao.getUser(id, true);
 
-    // user.password = req.body.newPassword;
-    // await user.save();
+    // Check current password
+    const isMatch = await brcypt.compare(currentPassword, user.password);
 
-    // sendTokenResponse(user, 200, res);
+    //Update password
+    await authDao.updatePassword(newPassword, id);
+
+    sendTokenResponse(user, 200, res);
 })
 
 // @desc     Forgot password
 // @route    POST /api/v1/auth/forgotpassword
 // @access   public
 exports.forgotPassword = asyncHandler(async (req, res, next) => {
-    // const user = await User.findOne({ email: req.body.email });
 
-    // if (!user) {
-    //     return next(new ErrorResponse('There is no user with that email', 404));
-    // }
+    const { email, mobile_no } = req.body;
 
-    //Get reset token
-    // const resetToken = user.getResetPasswordToken();
+    //Fetch user information using mobile
+    const user = await authDao.getUserFromMobileNo(mobile_no);
 
-    // await user.save({ validateBeforeSave: false });
+    if (!user) {
+        return next(new ErrorResponse('There is no user with that mobile number', 404));
+    }
+
+    // Get reset token
+    const { resetToken, reset_password_token, reset_password_expire } = authMiddleWare.getResetPasswordToken();
+
+    let keyList = await commonFunctions.getUserTableKeys({ reset_password_token, reset_password_expire });
+
+    //Create dynamic query
+    let query = await commonFunctions.createUserTableQuery(keyList, { reset_password_token, reset_password_expire }, user.user_id);
+
+    //Execute the update
+    await authDao.updateUser(query);
 
     //Create reset URL
-    // const resetUrl = `${req.protocol}://${req.get('host')}/api/v1/auth/resetpassword/${resetToken}`;
+    const resetUrl = `${req.protocol}://${req.get('host')}/api/v1/auth/resetpassword/${resetToken}`;
 
-    const message = `You are receiving this email because you (or someone else) has requested the reset of a password. Please make a PUT request to: \n\n ${resetUrl}`;
+    const message = `You are receiving this sms because you (or someone else) has requested the reset of a password. Please make a PUT request to: \n\n ${resetUrl}`;
 
     try {
-        await sendEmail({
-            email: user.email,
-            subject: 'Password Reset Token',
-            message
-        });
+        // await sendEmail({
+        //     email: user.email,
+        //     subject: 'Password Reset Token',
+        //     message
+        // });
 
         res.status(200).json({
             success: true,
-            data: 'Email Sent'
+            data: 'SMS Sent',
+            resetUrl
         })
     } catch (error) {
         console.log(error);
-        // user.resetPasswordToken = undefined;
-        // user.resetPasswordExpire = undefined;
 
-        // await user.save({ validateBeforeSave: false });
+        let keyList = await commonFunctions.getUserTableKeys({ reset_password_token: '', reset_password_expire: '' });
 
-        return next(new ErrorResponse('Email could not be sent', 500));
+        //Create dynamic query
+        let query = await commonFunctions.createUserTableQuery(keyList, { reset_password_token: '', reset_password_expire: '' }, user.user_id);
+
+        //Execute the update
+        await authDao.updateUser(query);
+
+        return next(new ErrorResponse('SMS could not be sent', 500));
     }
 
 })
@@ -179,25 +214,59 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
 // @route    PUT /api/v1/auth/resetpassword/:resettoken
 // @access   public
 exports.resetpassword = asyncHandler(async (req, res, next) => {
+
+    const { resettoken } = req.params;
+    const { password } = req.body;
+
     //Get hashed token
-    const resetPasswordToken = crypto.createHash('sha256').update(req.params.resettoken).digest('hex');
+    const resetPasswordToken = crypto.createHash('sha256').update(resettoken).digest('hex');
 
-    // const user = await User.findOne({
-    //     resetPasswordToken,
-    //     resetPasswordExpire: { $gt: Date.now() }
-    // });
+    const user = await authDao.getUserFromResetPasswordToken(resetPasswordToken);
 
-    // if (!user) {
-    //     return next(new ErrorResponse('Invalid token', 400));
-    // }
+    if (!user) {
+        return next(new ErrorResponse('Invalid token', 400));
+    }
 
-    //Set new password
-    // user.password = req.body.password;
-    // user.resetPasswordToken = undefined;
-    // user.resetPasswordExpire = undefined;
-    // await user.save();
+    if (Number(user.reset_password_expire) < Date.now()) {
+        return next(new ErrorResponse('Token expired', 400));
+    }
 
-    // sendTokenResponse(user, 200, res);
+    let keyList = await commonFunctions.getUserTableKeys({ reset_password_token: '', reset_password_expire: '', password });
+
+    //Create dynamic query
+    let query = await commonFunctions.createUserTableQuery(keyList, { reset_password_token: '', reset_password_expire: '', password }, user.user_id);
+
+    //Execute the update
+    await authDao.updateUser(query);
+
+
+    sendTokenResponse(user, 200, res);
+})
+
+// @desc     Delete User
+// @route    DELETE /api/v1/auth/deleteuser
+// @access   private
+exports.deleteUser = asyncHandler(async (req, res, next) => {
+    const { user_id, id } = req.body;
+
+    const user_admin = await authDao.getUser(id, true);
+
+    if (user_admin.role != 'ADMIN') {
+        return next(new ErrorResponse('Cannot perform this action, only ADMIN has a right to delete', 403));
+    }
+
+    const user = await authDao.getUser(user_id, true);
+
+    if (!user) {
+        return next(new ErrorResponse('User not found, to be deleted', 403));
+    }
+
+    await authDao.deleteUser(user.user_id);
+
+    res.status(200).json({
+        success: true
+    })
+
 })
 
 //Get token from model, create cookie and send response
