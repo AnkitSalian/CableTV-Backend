@@ -1,11 +1,11 @@
 const crypto = require('crypto');
 const brcypt = require('bcryptjs');
 const ErrorResponse = require('../utils/errorResponse');
-// const User = require('../models/User');
 const sendEmail = require('../utils/sendEmail');
 const asyncHandler = require('../middleware/async');
 const authDao = require('../daoimpl/auth');
 const authMiddleWare = require('../middleware/auth');
+const commonFunctions = require('../utils/commonfunctions');
 
 // @desc     Register user
 // @route    POST /api/v1/auth/register
@@ -57,7 +57,7 @@ exports.login = asyncHandler(async (req, res, next) => {
 
     //Check if password matches
     const isMatch = await brcypt.compare(password, user.password);
-
+    console.log('isMatch====>', isMatch);
     if (!isMatch) {
         return next(new ErrorResponse('Invalid credentials', 401));
     }
@@ -103,15 +103,35 @@ exports.getMe = asyncHandler(async (req, res, next) => {
 exports.updateDetails = asyncHandler(async (req, res, next) => {
     const { id } = req.body;
 
-    console.log('body===>', req.body);
-    // const user = await User.findByIdAndUpdate(req.user.id, fieldsToUpdate, {
-    //     new: true,
-    //     runValidators: true
-    // });
+    let keyList = await commonFunctions.getUserTableKeys(req.body);
+
+    if (keyList.length == 0) {
+        return next(new ErrorResponse(`No column values specified, kindly enter the value that has: ${process.env.USER_TABLE_COLUMNS}`, 400));
+    }
+
+    if (keyList.includes('user_name')) {
+
+        //Check user_name already exits
+        const user_count = await authDao.checkUserNameExists(req.body.user_name);
+
+        if (user_count != 0) {
+            return next(new ErrorResponse('User already exist, kindly select different user name', 401));
+        }
+
+    }
+
+    //Create dynamic query
+    let query = await commonFunctions.createUserTableQuery(keyList, req.body, id);
+
+    //Execute the update
+    await authDao.updateUser(query);
+
+    //Fetch saved user information
+    const user = await authDao.getUser(id, true);
 
     res.status(200).json({
         success: true,
-        // data: user
+        data: user
     })
 })
 

@@ -1,6 +1,7 @@
 const brcypt = require('bcryptjs');
 const connectDB = require('../config/db')
 const asyncHandler = require('../middleware/async');
+// const { connect, delete } = require('../routes/auth');
 
 exports.getUser = asyncHandler(async (user_value, idFlag) => {
     return new Promise(async (resolve, reject) => {
@@ -8,7 +9,9 @@ exports.getUser = asyncHandler(async (user_value, idFlag) => {
         await connection.query(`select * from user where ${idFlag ? 'user_id' : 'user_name'}  = '${user_value}'`, (error, results) => {
             if (error) reject(error);
             connection.release;
-            resolve(results[0]);
+            let user = results[0];
+            if (idFlag) delete user['password'];
+            resolve(user);
         })
     })
 
@@ -27,7 +30,6 @@ exports.updateLastLogin = asyncHandler(async (user_id) => {
 })
 
 exports.checkUserNameExists = asyncHandler(async (user_name) => {
-    console.log('Inside checkUserNameExists====>');
     return new Promise(async (resolve, reject) => {
         connection = await connectDB();
         await connection.query(`select count(1) as user_count from user where user_name = '${user_name}'`, (error, results) => {
@@ -50,5 +52,17 @@ exports.createUser = asyncHandler(async ({ user_name, email, password, role, add
             connection.release;
             resolve(true);
         })
+    })
+})
+
+exports.updateUser = asyncHandler(async (query) => {
+    return new Promise(async (resolve, reject) => {
+        connection = await connectDB();
+        await connection.query(query, (error, result) => {
+            if (error) reject(error);
+            connection.release;
+            resolve(true);
+        })
+
     })
 })
