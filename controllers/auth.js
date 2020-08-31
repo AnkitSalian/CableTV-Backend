@@ -103,6 +103,12 @@ exports.getMe = asyncHandler(async (req, res, next) => {
 exports.updateDetails = asyncHandler(async (req, res, next) => {
     const { id } = req.body;
 
+    const user_admin = await authDao.getUser(id, true);
+
+    if (user_admin.role != 'ADMIN') {
+        return next(new ErrorResponse('Cannot perform this action, only ADMIN has a right to update User data', 403));
+    }
+
     let keyList = await commonFunctions.getUserTableKeys(req.body);
 
     if (keyList.length == 0) {

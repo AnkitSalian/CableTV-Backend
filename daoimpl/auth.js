@@ -1,7 +1,6 @@
 const brcypt = require('bcryptjs');
 const connectDB = require('../config/db')
 const asyncHandler = require('../middleware/async');
-// const { connect, delete } = require('../routes/auth');
 
 exports.getUser = asyncHandler(async (user_value, idFlag) => {
     return new Promise(async (resolve, reject) => {
@@ -39,7 +38,6 @@ exports.checkUserNameExists = asyncHandler(async (user_name) => {
 })
 
 exports.createUser = asyncHandler(async ({ user_name, email, password, role, address, mobile_no, full_name }) => {
-    console.log('Value===>', user_name, email, password, role, address, mobile_no, full_name);
     return new Promise(async (resolve, reject) => {
         connection = await connectDB();
         const salt = await brcypt.genSalt(10);
