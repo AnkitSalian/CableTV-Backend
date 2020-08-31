@@ -109,3 +109,25 @@ exports.createTechnicianTableQuery = asyncHandler(async (techKey, techReq, id) =
     return updateQuery;
 
 })
+
+exports.createTicketReference = asyncHandler(async (ticket_no) => {
+    let d = new Date();
+    var mm = d.getMonth() + 1; // getMonth() is zero-based
+    var dd = d.getDate();
+
+    //Returns output in format yyyymmdd
+    return [d.getFullYear(),
+    (mm > 9 ? '' : '0') + mm,
+    (dd > 9 ? '' : '0') + dd
+    ].join('') + ticket_no;
+})
+
+exports.generateRefNo = asyncHandler(async (num) => {
+
+    if (num.length <= 4) {
+        return num.length == 4 ? num : (num.length == 3 ? '0' + num : (num.length == 2 ? '00' + num : '000' + num))
+    } else {
+        return '0000'
+    }
+
+})

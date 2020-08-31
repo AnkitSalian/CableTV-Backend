@@ -23,6 +23,7 @@ dotenv.config({ path: './config/config.env' });
 const auth = require('./routes/auth');
 const customer = require('./routes/customer');
 const technician = require('./routes/technician');
+const ticket = require('./routes/ticket');
 
 const app = express();
 
@@ -68,6 +69,7 @@ app.use(cors());
 app.use('/api/v1/auth', auth);
 app.use('/api/v1/customer', customer);
 app.use('/api/v1/technician', technician);
+app.use('/api/v1/ticket', ticket);
 
 app.use(errorHandler);
 
