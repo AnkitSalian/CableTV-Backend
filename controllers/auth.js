@@ -186,7 +186,7 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
     //Create reset URL
     const resetUrl = `${req.protocol}://${req.get('host')}/api/v1/auth/resetpassword/${resetToken}`;
 
-    const message = `You are receiving this sms because you (or someone else) has requested the reset of a password. Please make a PUT request to: \n\n ${resetUrl}`;
+    const message = `You are receiving this sms because you (or someone else) has requested the reset of a password. Your user name is ${user.user_name}. Please make a PUT request to: \n\n ${resetUrl}`;
 
     try {
         // await sendEmail({
