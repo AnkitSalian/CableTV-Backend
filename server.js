@@ -22,6 +22,7 @@ dotenv.config({ path: './config/config.env' });
 //Route files
 const auth = require('./routes/auth');
 const customer = require('./routes/customer');
+const technician = require('./routes/technician');
 
 const app = express();
 
@@ -66,6 +67,7 @@ app.use(cors());
 //Mount router
 app.use('/api/v1/auth', auth);
 app.use('/api/v1/customer', customer);
+app.use('/api/v1/technician', technician);
 
 app.use(errorHandler);
 

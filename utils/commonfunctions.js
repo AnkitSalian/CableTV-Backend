@@ -64,12 +64,47 @@ exports.createCustomerTableQuery = asyncHandler(async (custKey, custReq, id) => 
         let key = custKey[i];
 
         //If value not blank then insert into query
-        updateQuery += `${key} = '${custReq[key]}', `;
+        if (custReq[key] != '') {
+            updateQuery += `${key} = '${custReq[key]}', `;
+        }
 
     }
 
     updateQuery = updateQuery.slice(0, -2);
     updateQuery += ` where customer_id = '${id}'`;
+
+    return updateQuery;
+
+})
+
+exports.getTechnicianTableKeys = asyncHandler(async (techReq) => {
+    let keys = [];
+
+    for (let i = 0; i < Object.keys(techReq).length; i++) {
+        let techKey = Object.keys(techReq)[i];
+
+        if (process.env.TECHNICIAN_TABLE_COLUMNS.split(',').includes(techKey)) {
+            keys.push(techKey);
+        }
+    }
+
+    return keys;
+})
+
+exports.createTechnicianTableQuery = asyncHandler(async (techKey, techReq, id) => {
+    let updateQuery = "update technician_master set ";
+
+    for (let i = 0; i < techKey.length; i++) {
+        let key = techKey[i];
+
+        //If value not blank then insert into query
+        if (techReq[key] != '') {
+            updateQuery += `${key} = '${techReq[key]}', `;
+        }
+
+    }
+
+    updateQuery += `updatedDate = now() where tech_id = '${id}'`;
 
     return updateQuery;
 

@@ -20,7 +20,7 @@ exports.fetchAllCustomers = asyncHandler(async (req, res, next) => {
     })
 })
 
-// @desc     Fetch all customers
+// @desc     Fetch single customers
 // @route    GET /api/v1/customer/:custid
 // @access   public
 exports.fetchCustomerByCustId = asyncHandler(async (req, res, next) => {
@@ -41,7 +41,7 @@ exports.fetchCustomerByCustId = asyncHandler(async (req, res, next) => {
     })
 })
 
-// @desc     Fetch all customers
+// @desc     Create new customer
 // @route    POST /api/v1/customer/register
 // @access   private
 exports.createCustomer = asyncHandler(async (req, res, next) => {
@@ -52,6 +52,10 @@ exports.createCustomer = asyncHandler(async (req, res, next) => {
     //Check if user is admin
     if (user.role != 'ADMIN') {
         return next(new ErrorResponse('Cannot perform this action, only ADMIN has a right to create customer', 403));
+    }
+
+    if (customer_id == null || customer_id == '') {
+        return next(new ErrorResponse('customer_id cannot be null or blank', 400));
     }
 
     //Register new customer
@@ -66,7 +70,7 @@ exports.createCustomer = asyncHandler(async (req, res, next) => {
     })
 })
 
-// @desc     Update user details
+// @desc     Update customer details
 // @route    PUT /api/v1/customer/updatedetails
 // @access   private
 exports.updateDetails = asyncHandler(async (req, res, next) => {
@@ -78,6 +82,10 @@ exports.updateDetails = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse('Cannot perform this action, only ADMIN has a right to update Customer data', 403));
     }
 
+    if (customer_id == null || customer_id == '') {
+        return next(new ErrorResponse('customer_id cannot be null or blank', 400));
+    }
+
     let keyList = await commonFunctions.getCustomerTableKeys(req.body);
 
     if (keyList.length == 0) {
@@ -86,7 +94,6 @@ exports.updateDetails = asyncHandler(async (req, res, next) => {
 
     //Create dynamic query
     let query = await commonFunctions.createCustomerTableQuery(keyList, req.body, customer_id);
-    console.log('query===>', query);
 
     //Execute the update
     await customerDao.updateCustomer(query);
@@ -100,7 +107,7 @@ exports.updateDetails = asyncHandler(async (req, res, next) => {
     })
 })
 
-// @desc     Update user details
+// @desc     Delete customer
 // @route    DELETE /api/v1/customer/del/:custid
 // @access   private
 exports.deleteCustomer = asyncHandler(async (req, res, next) => {
@@ -110,7 +117,7 @@ exports.deleteCustomer = asyncHandler(async (req, res, next) => {
     const user = await authDao.getUser(id, true);
 
     if (user.role != 'ADMIN') {
-        return next(new ErrorResponse('Cannot perform this action, only ADMIN has a right to update Customer data', 403));
+        return next(new ErrorResponse('Cannot perform this action, only ADMIN has a right to delete Customer data', 403));
     }
 
     //Fetch customer by its custmerId
