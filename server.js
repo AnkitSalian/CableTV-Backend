@@ -24,6 +24,7 @@ const auth = require('./routes/auth');
 const customer = require('./routes/customer');
 const technician = require('./routes/technician');
 const ticket = require('./routes/ticket');
+const excel = require('./routes/excel');
 
 const app = express();
 
@@ -70,6 +71,7 @@ app.use('/api/v1/auth', auth);
 app.use('/api/v1/customer', customer);
 app.use('/api/v1/technician', technician);
 app.use('/api/v1/ticket', ticket);
+app.use('/api/v1/excel', excel);
 
 app.use(errorHandler);
 
