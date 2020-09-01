@@ -1,4 +1,6 @@
 const brcypt = require('bcryptjs');
+const fs = require('fs');
+const json2xls = require('json2xls');
 const asyncHandler = require('../middleware/async');
 
 exports.getUserTableKeys = asyncHandler(async (userReq) => {
@@ -130,4 +132,12 @@ exports.generateRefNo = asyncHandler(async (num) => {
         return '0000'
     }
 
+})
+
+exports.generateExcelFile = asyncHandler(async (json_to_write, filename) => {
+    let xls = await json2xls(json_to_write);
+
+    fs.writeFileSync(`${filename}.xlsx`, xls, 'binary');
+
+    return true;
 })
