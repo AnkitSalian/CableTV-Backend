@@ -45,7 +45,7 @@ exports.fetchCustomerByCustId = asyncHandler(async (req, res, next) => {
 // @route    POST /api/v1/customer/register
 // @access   private
 exports.createCustomer = asyncHandler(async (req, res, next) => {
-    const { id, customer_id, full_name, address, mobile_no } = req.body;
+    const { id, customer_id, full_name, address, mobile_no, cable_user, internet_user } = req.body;
 
     const user = await authDao.getUser(id, true);
 
@@ -58,8 +58,12 @@ exports.createCustomer = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse('customer_id cannot be null or blank', 400));
     }
 
+    if (!([0, 1].includes(cable_user) && [0, 1].includes(internet_user))) {
+        return next(new ErrorResponse('cable_user or internet_user values can be either 0 or 1', 400));
+    }
+
     //Register new customer
-    await customerDao.createCustomer({ customer_id, full_name, address, mobile_no });
+    await customerDao.createCustomer({ customer_id, full_name, address, mobile_no, cable_user, internet_user });
 
     //Fetch customer by its custmerId
     const customer = await customerDao.fetchCustomerByCustId(customer_id);
@@ -92,9 +96,21 @@ exports.updateDetails = asyncHandler(async (req, res, next) => {
         return next(new ErrorResponse(`No column values specified, kindly enter the value that has: ${process.env.CUSTOMER_TABLE_COLUMNS}`, 400));
     }
 
+    if (keyList.includes('cable_user') || keyList.includes('internet_user')) {
+
+        if (!([0, 1].includes(req.body.cable_user))) {
+            return next(new ErrorResponse('cable_user values can be either 0 or 1', 400));
+        }
+
+        if (!([0, 1].includes(req.body.internet_user))) {
+            return next(new ErrorResponse('internet_user values can be either 0 or 1', 400));
+        }
+
+    }
+
     //Create dynamic query
     let query = await commonFunctions.createCustomerTableQuery(keyList, req.body, customer_id);
-
+    console.log(query);
     //Execute the update
     await customerDao.updateCustomer(query);
 

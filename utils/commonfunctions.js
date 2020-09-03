@@ -66,6 +66,9 @@ exports.createCustomerTableQuery = asyncHandler(async (custKey, custReq, id) => 
         let key = custKey[i];
 
         //If value not blank then insert into query
+        if (['cable_user', 'internet_user'].includes(key)) {
+            updateQuery += `${key} = ${custReq[key]}, `;
+        }
         if (custReq[key] != '') {
             updateQuery += `${key} = '${custReq[key]}', `;
         }
