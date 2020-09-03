@@ -110,7 +110,7 @@ exports.updateDetails = asyncHandler(async (req, res, next) => {
 
     //Create dynamic query
     let query = await commonFunctions.createCustomerTableQuery(keyList, req.body, customer_id);
-    console.log(query);
+
     //Execute the update
     await customerDao.updateCustomer(query);
 
