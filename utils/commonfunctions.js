@@ -75,7 +75,7 @@ exports.createCustomerTableQuery = asyncHandler(async (custKey, custReq, id) => 
 
     }
 
-    updateQuery = updateQuery.slice(0, -2);
+    updateQuery += `updated_at = now()`;
     updateQuery += ` where customer_id = '${id}'`;
 
     return updateQuery;

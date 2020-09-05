@@ -37,8 +37,8 @@ exports.getMaxCustomerId = asyncHandler(async () => {
 exports.createCustomer = asyncHandler(async ({ customer_id, full_name, address, mobile_no, cable_user, internet_user }) => {
     return new Promise(async (resolve, reject) => {
         connection = await connectDB();
-        await connection.query(`insert into customer_master (customer_id, full_name, address, mobile_no, cable_user, internet_user) 
-        values ('${customer_id}', '${full_name}', '${address}', '${mobile_no}', ${cable_user}, ${internet_user})`, (error, results) => {
+        await connection.query(`insert into customer_master (customer_id, full_name, address, mobile_no, cable_user, internet_user, created_at) 
+        values ('${customer_id}', '${full_name}', '${address}', '${mobile_no}', ${cable_user}, ${internet_user}, now())`, (error, results) => {
             if (error) reject(error);
             connection.release;
             resolve(true);
