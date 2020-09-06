@@ -175,18 +175,20 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
     // Get reset token
     const { resetToken, reset_password_token, reset_password_expire } = authMiddleWare.getResetPasswordToken();
 
-    let keyList = await commonFunctions.getUserTableKeys({ reset_password_token, reset_password_expire });
+    let password = process.env.DEFAULT_PASSWORD;
+
+    let keyList = await commonFunctions.getUserTableKeys({ reset_password_token, reset_password_expire, password });
 
     //Create dynamic query
-    let query = await commonFunctions.createUserTableQuery(keyList, { reset_password_token, reset_password_expire }, user.user_id);
+    let query = await commonFunctions.createUserTableQuery(keyList, { reset_password_token, reset_password_expire, password }, user.user_id);
 
     //Execute the update
     await authDao.updateUser(query);
 
     //Create reset URL
-    const resetUrl = `${req.protocol}://${req.get('host')}/api/v1/auth/resetpassword/${resetToken}`;
+    // const resetUrl = `${req.protocol}://${req.get('host')}/api/v1/auth/resetpassword/${resetToken}`;
 
-    const message = `You are receiving this sms because you (or someone else) has requested the reset of a password. Your user name is ${user.user_name}. Please make a PUT request to: \n\n ${resetUrl}`;
+    const message = `You are receiving this sms because you (or someone else) has requested the reset of a password. Your user name is ${user.user_name} and password is ${password}`;
 
     try {
         // await sendEmail({
@@ -197,8 +199,7 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
 
         res.status(200).json({
             success: true,
-            data: 'SMS Sent',
-            resetUrl
+            data: 'SMS Sent'
         })
     } catch (error) {
         console.log(error);
