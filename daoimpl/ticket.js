@@ -24,13 +24,13 @@ exports.fetchTicket = asyncHandler(async (ref_no) => {
 })
 
 exports.createTicket = asyncHandler(async ({ reference_no, customer_id, customer_name, address, area, mobile,
-    complaint_remarks, created_by }) => {
+    complaint_remarks, created_by, type }) => {
     return new Promise(async (resolve, reject) => {
         connection = await connectDB();
         connection.query(`insert into complaint_register (reference_no, customer_id, customer_name, address, area, 
-            mobile, complaint_remarks, created_by, status, created_date) values ('${reference_no}', '${customer_id}',
+            mobile, complaint_remarks, created_by, status, created_date, type) values ('${reference_no}', '${customer_id}',
             '${customer_name}', '${address}', '${area}', '${mobile}', '${complaint_remarks}', '${created_by}',
-            'NEW', now())`, (error, result) => {
+            'NEW', now(), '${type}')`, (error, result) => {
             if (error) reject(error);
             connection.release;
             resolve(true);

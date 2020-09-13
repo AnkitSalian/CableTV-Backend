@@ -45,40 +45,74 @@ exports.getTicket = asyncHandler(async (req, res, next) => {
 // @route    POST /api/v1/ticket/create
 // @access   public
 exports.createTicket = asyncHandler(async (req, res, next) => {
-    const { id, cust_id, area, complaint_remarks } = req.body;
+    const { id, cust_id, area, complaint_remarks, type, full_name, address, mobile_no } = req.body;
 
     //Get user information
     const user = await authDao.getUser(id, true);
 
-    //Get customer information
-    const customer = await customerDao.fetchCustomerByCustId(cust_id);
-
-    if (!customer) {
-        return next(new ErrorResponse(`No customer found with customer id ${cust_id}`, 400));
+    if (!["INTERNET", "CABLE"].includes(type)) {
+        return next(new ErrorResponse(`Ticket type can be either INTERNET or USER`, 400));
     }
 
     // Get max number of tickets for the day
     const maxTicketCount = await ticketDao.getMaxTicket();
 
-    let ticket_no = 0;
-    if (maxTicketCount.length == 0) {
-        await ticketDao.insertTicketCount();
-        ticket_no = 1;
-    } else {
-        await ticketDao.updateTicketCount(maxTicketCount[0].ticket_count);
-        ticket_no = Number(maxTicketCount[0].ticket_count) + 1;
+    let reference_no = "";
+
+    if (type === "CABLE") {
+
+        //Get customer information
+        const customerCheck = await customerDao.fetchCustomerByCustId(cust_id);
+        let customer = null;
+        if (!customerCheck) {
+            //Register new customer
+            await customerDao.createCustomer({ customer_id: cust_id, full_name, address, mobile_no, cable_user: 1, internet_user: 0 });
+
+            //Fetch customer by its custmerId
+            customer = await customerDao.fetchCustomerByCustId(cust_id);
+
+        }
+
+        let ticket_no = 0;
+        if (maxTicketCount.length == 0) {
+            await ticketDao.insertTicketCount();
+            ticket_no = 1;
+        } else {
+            await ticketDao.updateTicketCount(maxTicketCount[0].ticket_count);
+            ticket_no = Number(maxTicketCount[0].ticket_count) + 1;
+        }
+
+        const appendNumber = await commonFunctions.generateRefNo(ticket_no.toString());
+
+        reference_no = await commonFunctions.createTicketReference(appendNumber);
+
+        await ticketDao.createTicket({
+            reference_no, customer_id: cust_id, customer_name: customer.full_name,
+            address: customer.address, area, mobile: customer.mobile_no, complaint_remarks, created_by: user.user_name, type
+        });
+
+    } else if (type === "INTERNET") {
+        let ticket_no = 0;
+        if (maxTicketCount.length == 0) {
+            await ticketDao.insertTicketCount();
+            ticket_no = 1;
+        } else {
+            await ticketDao.updateTicketCount(maxTicketCount[0].ticket_count);
+            ticket_no = Number(maxTicketCount[0].ticket_count) + 1;
+        }
+
+        const appendNumber = await commonFunctions.generateRefNo(ticket_no.toString());
+
+        reference_no = await commonFunctions.createTicketReference(appendNumber);
+
+        await ticketDao.createTicket({
+            reference_no, customer_id: "", customer_name: full_name,
+            address: address, area, mobile: mobile_no, complaint_remarks, created_by: user.user_name, type
+        });
     }
 
-    const appendNumber = await commonFunctions.generateRefNo(ticket_no.toString());
 
-    const reference_no = await commonFunctions.createTicketReference(appendNumber);
-
-    await ticketDao.createTicket({
-        reference_no, customer_id: cust_id, customer_name: customer.full_name,
-        address: customer.address, area, mobile: customer.mobile_no, complaint_remarks, created_by: user.user_name
-    });
-
-    //Fetch inserted ticket
+    // //Fetch inserted ticket
     const ticket = await ticketDao.fetchTicket(reference_no);
 
     res.status(200).json({
