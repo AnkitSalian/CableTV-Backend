@@ -6,6 +6,7 @@ const {
     fetchAllCustomers,
     fetchCustomerByCustId,
     createCustomer,
+    createMultipleCustomer,
     updateDetails,
     deleteCustomer
 } = require('../controllers/customer');
@@ -17,6 +18,8 @@ router.get('/all', protect, fetchAllCustomers);
 router.get('/:custid', protect, fetchCustomerByCustId);
 
 router.post('/register', protect, createCustomer);
+
+router.post('/multiregister', protect, createMultipleCustomer);
 
 router.put('/updatedetails', protect, updateDetails);
 

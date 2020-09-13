@@ -8,7 +8,8 @@ const {
     updateDetails,
     updatePassword,
     logout,
-    deleteUser
+    deleteUser,
+    getAllUsers
 } = require('../controllers/auth');
 
 const router = express.Router();
@@ -32,5 +33,7 @@ router.post('/forgotpassword', forgotPassword);
 router.put('/resetpassword/:resettoken', resetpassword);
 
 router.delete('/deleteuser', protect, deleteUser);
+
+router.get('/getAllUsers', getAllUsers);
 
 module.exports = router;

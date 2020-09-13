@@ -74,6 +74,57 @@ exports.createCustomer = asyncHandler(async (req, res, next) => {
     })
 })
 
+// @desc     Create multiple new customer
+// @route    POST /api/v1/customer/multiregister
+// @access   private
+exports.createMultipleCustomer = asyncHandler(async (req, res, next) => {
+    const { id, customerList } = req.body;
+    // const { id, customer_id, full_name, address, mobile_no, cable_user, internet_user } = req.body;
+
+    const user = await authDao.getUser(id, true);
+    let customerFetchList = [];
+
+    //Check if user is admin
+    if (user.role != 'ADMIN') {
+        return next(new ErrorResponse('Cannot perform this action, only ADMIN has a right to create customer', 403));
+    }
+
+    for (let i = 0; i < customerList.length; i++) {
+        
+        const customer = customerList[i];
+        const { customer_id, cable_user, internet_user } = customer;
+
+        if (customer_id == null || customer_id == '') {
+            return next(new ErrorResponse('customer_id cannot be null or blank', 400));
+        }
+
+        if (!([0, 1].includes(cable_user) && [0, 1].includes(internet_user))) {
+            return next(new ErrorResponse('cable_user or internet_user values can be either 0 or 1', 400));
+        }
+
+    }
+
+    for (let i = 0; i < customerList.length; i++) {
+
+        const customer = customerList[i];
+        const { customer_id, full_name, address, mobile_no, cable_user, internet_user } = customer;
+
+        //Register new customer
+        await customerDao.createCustomer({ customer_id, full_name, address, mobile_no, cable_user, internet_user });
+
+        //Fetch customer by its custmerId
+        const fetchCustomer = await customerDao.fetchCustomerByCustId(customer_id);
+
+        await customerFetchList.push(fetchCustomer);
+
+    }
+
+    res.status(200).json({
+        success: true,
+        data: customerFetchList
+    })
+})
+
 // @desc     Update customer details
 // @route    PUT /api/v1/customer/updatedetails
 // @access   private

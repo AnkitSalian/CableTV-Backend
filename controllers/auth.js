@@ -276,6 +276,20 @@ exports.deleteUser = asyncHandler(async (req, res, next) => {
 
 })
 
+// @desc     Register user
+// @route    GET /api/v1/auth/getAllUsers
+// @access   public
+exports.getAllUsers = asyncHandler(async (req, res, next) => {
+
+    const userList = await authDao.getAllUsers();
+
+    res.status(200).json({
+        success: true,
+        data: userList
+    })
+})
+
+
 //Get token from model, create cookie and send response
 const sendTokenResponse = (user, statusCode, res) => {
     //Create token 

@@ -14,6 +14,18 @@ exports.getUser = asyncHandler(async (user_value, idFlag) => {
 
 })
 
+exports.getAllUsers = asyncHandler(async () => {
+    return new Promise(async (resolve, reject) => {
+        connection = await connectDB();
+        await connection.query(`select * from user`, (error, results) => {
+            if (error) reject(error);
+            connection.release;
+            resolve(results);
+        })
+    })
+
+})
+
 exports.updateLastLogin = asyncHandler(async (user_id) => {
     return new Promise(async (resolve, reject) => {
         connection = await connectDB();
