@@ -4,6 +4,7 @@ const ErrorResponse = require('../utils/errorResponse');
 const asyncHandler = require('../middleware/async');
 const excelDao = require('../daoimpl/exceldao');
 const commonFunctions = require('../utils/commonfunctions');
+const excel = require('exceljs');
 
 // @desc     Export excel file
 // @route    GET /api/v1/excel/:table_name
@@ -22,8 +23,25 @@ exports.generateExcel = asyncHandler(async (req, res, next) => {
 
     let excelFilePath = path.join(__dirname, `../${table_name}.xlsx`);
 
-    res.download(`${excelFilePath}`, `${table_name}.xlsx`);
+    var workbook = new excel.Workbook();
+    workbook.xlsx.readFile(excelFilePath)
+        .then(function () {
+            var worksheet = workbook.getWorksheet(sheet);
+        });
 
+    // res.download(`${excelFilePath}`, `${table_name}.xlsx`);
+    res.setHeader(
+        "Content-Type",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader(
+        "Content-Disposition",
+        "attachment; filename=" + `${table_name}.xlsx`
+    );
+
+    return workbook.xlsx.write(res).then(function () {
+        res.status(200).end();
+    });
 })
 
 // @desc     Export excel file with start or end date params
@@ -50,6 +68,25 @@ exports.getTableData = asyncHandler(async (req, res, next) => {
 
     let excelFilePath = path.join(__dirname, `../${table_name}.xlsx`);
 
-    res.download(`${excelFilePath}`, `${table_name}.xlsx`);
+    var workbook = new excel.Workbook();
+    workbook.xlsx.readFile(excelFilePath)
+        .then(function () {
+            var worksheet = workbook.getWorksheet(sheet);
+        });
+
+    // res.download(`${excelFilePath}`, `${table_name}.xlsx`);
+
+    res.setHeader(
+        "Content-Type",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader(
+        "Content-Disposition",
+        "attachment; filename=" + `${table_name}.xlsx`
+    );
+
+    return workbook.xlsx.write(res).then(function () {
+        res.status(200).end();
+    });
 
 })

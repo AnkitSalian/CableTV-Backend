@@ -51,7 +51,7 @@ exports.createTicket = asyncHandler(async (req, res, next) => {
     const user = await authDao.getUser(id, true);
 
     if (!["INTERNET", "CABLE"].includes(type)) {
-        return next(new ErrorResponse(`Ticket type can be either INTERNET or USER`, 400));
+        return next(new ErrorResponse(`Ticket type can be either INTERNET or CABLE`, 400));
     }
 
     // Get max number of tickets for the day
