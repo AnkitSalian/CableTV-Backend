@@ -19,29 +19,34 @@ exports.generateExcel = asyncHandler(async (req, res, next) => {
 
     const json_array = await excelDao.getTabledata(table_name);
 
-    await commonFunctions.generateExcelFile(json_array, table_name);
+    // await commonFunctions.generateExcelFile(json_array, table_name);
 
-    let excelFilePath = path.join(__dirname, `../${table_name}.xlsx`);
+    // let excelFilePath = path.join(__dirname, `../${table_name}.xlsx`);
 
-    var workbook = new excel.Workbook();
-    workbook.xlsx.readFile(excelFilePath)
-        .then(function () {
-            var worksheet = workbook.getWorksheet(sheet);
-        });
+    // var workbook = new excel.Workbook();
+    // workbook.xlsx.readFile(excelFilePath)
+    //     .then(function () {
+    //         var worksheet = workbook.getWorksheet(sheet);
+    //     });
 
-    // res.download(`${excelFilePath}`, `${table_name}.xlsx`);
-    res.setHeader(
-        "Content-Type",
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    );
-    res.setHeader(
-        "Content-Disposition",
-        "attachment; filename=" + `${table_name}.xlsx`
-    );
+    // // res.download(`${excelFilePath}`, `${table_name}.xlsx`);
+    // res.setHeader(
+    //     "Content-Type",
+    //     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    // );
+    // res.setHeader(
+    //     "Content-Disposition",
+    //     "attachment; filename=" + `${table_name}.xlsx`
+    // );
 
-    return workbook.xlsx.write(res).then(function () {
-        res.status(200).end();
-    });
+    // return workbook.xlsx.write(res).then(function () {
+    //     res.status(200).end();
+    // });
+
+    res.status(200).json({
+        status: true,
+        data: json_array
+    })
 })
 
 // @desc     Export excel file with start or end date params
@@ -64,29 +69,34 @@ exports.getTableData = asyncHandler(async (req, res, next) => {
 
     const json_array = await excelDao.getTabledataWithStartEndDate(table_name, startDateTime, endDateTime);
 
-    await commonFunctions.generateExcelFile(json_array, table_name);
+    // await commonFunctions.generateExcelFile(json_array, table_name);
 
-    let excelFilePath = path.join(__dirname, `../${table_name}.xlsx`);
+    // let excelFilePath = path.join(__dirname, `../${table_name}.xlsx`);
 
-    var workbook = new excel.Workbook();
-    workbook.xlsx.readFile(excelFilePath)
-        .then(function () {
-            var worksheet = workbook.getWorksheet(sheet);
-        });
+    // var workbook = new excel.Workbook();
+    // workbook.xlsx.readFile(excelFilePath)
+    //     .then(function () {
+    //         var worksheet = workbook.getWorksheet(sheet);
+    //     });
 
-    // res.download(`${excelFilePath}`, `${table_name}.xlsx`);
+    // // res.download(`${excelFilePath}`, `${table_name}.xlsx`);
 
-    res.setHeader(
-        "Content-Type",
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    );
-    res.setHeader(
-        "Content-Disposition",
-        "attachment; filename=" + `${table_name}.xlsx`
-    );
+    // res.setHeader(
+    //     "Content-Type",
+    //     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    // );
+    // res.setHeader(
+    //     "Content-Disposition",
+    //     "attachment; filename=" + `${table_name}.xlsx`
+    // );
 
-    return workbook.xlsx.write(res).then(function () {
-        res.status(200).end();
-    });
+    // return workbook.xlsx.write(res).then(function () {
+    //     res.status(200).end();
+    // });
+
+    res.status(200).json({
+        status: true,
+        data: json_array
+    })
 
 })

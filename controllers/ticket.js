@@ -68,10 +68,12 @@ exports.createTicket = asyncHandler(async (req, res, next) => {
             //Register new customer
             await customerDao.createCustomer({ customer_id: cust_id, full_name, address, mobile_no, cable_user: 1, internet_user: 0 });
 
-            //Fetch customer by its custmerId
-            customer = await customerDao.fetchCustomerByCustId(cust_id);
+
 
         }
+
+        //Fetch customer by its custmerId
+        customer = await customerDao.fetchCustomerByCustId(cust_id);
 
         let ticket_no = 0;
         if (maxTicketCount.length == 0) {
